@@ -9,3 +9,10 @@ export const ICONS = {
 
 export const STATUS = ["In Progress", "Completed", "Won´t do"]
 export const CLASSNAME_STATUS = ["progress", "completed", "wont"]
+
+// export const DEFAULT_TASK = {
+//   name:undefined,
+//   description: undefined,
+//   icon:undefined,
+//   status: undefined
+// }

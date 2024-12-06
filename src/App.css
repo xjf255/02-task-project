@@ -46,6 +46,7 @@ main>ul {
   padding-inline: 20px;
 
   li {
+    cursor: pointer;
     width: 600px;
     display: flex;
     border-radius: 16px;
