@@ -7,12 +7,5 @@ export const ICONS = {
   clock: "https://res.cloudinary.com/dkshw9hik/image/upload/v1732310484/clock_x62zvw.png"
 }
 
-export const STATUS = ["In Progress", "Completed", "Won´t do"]
+export const STATUS = ["In Progress", "Completed", "Won´t do"] as const
 export const CLASSNAME_STATUS = ["progress", "completed", "wont"]
-
-// export const DEFAULT_TASK = {
-//   name:undefined,
-//   description: undefined,
-//   icon:undefined,
-//   status: undefined
-// }
