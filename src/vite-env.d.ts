@@ -1,3 +1,10 @@
 /// <reference types="vite/client" />
 
-API_TASKS = 'https://zero2-task-api.onrender.com/tasks'
+interface ImportMetaEnv {
+  readonly VITE_APP_TITLE: string
+  // more env variables...
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}

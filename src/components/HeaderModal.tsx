@@ -1,10 +1,8 @@
 import { CloseModal } from "../Icons";
+import { useModalStore } from "../store/useModalStore";
 
-interface Props {
-  closeModal: () => void
-}
-
-export default function HeaderModal({ closeModal }: Props) {
+export default function HeaderModal() {
+  const { closeModal } = useModalStore()
   return (
     <header className='modal__title'>
       <h2>Tasks details</h2>

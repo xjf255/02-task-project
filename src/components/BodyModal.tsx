@@ -2,16 +2,13 @@ import { useId } from "react"
 import { CLASSNAME_STATUS, ICONS, STATUS } from "../const"
 import { DoneIcons } from "../Icons"
 import GetIcon from "./GetIcon"
-import { Task } from "../types"
+import { useModalStore } from "../store/useModalStore"
+import { RefProp } from "../types"
 
-interface Props {
-  formRef: React.RefObject<HTMLFormElement>,
-  task?: Task
-}
-
-export default function BodyModal({ formRef, task }: Props) {
+export default function BodyModal({ formRef }: RefProp) {
   const idInputURL = useId()
   const idInputHidden = useId()
+  const { task } = useModalStore()
 
   const handleClickIcons = (event: React.MouseEvent<HTMLElement>) => {
     const $lastSelected = document.querySelectorAll(".icon--selected")
@@ -36,9 +33,9 @@ export default function BodyModal({ formRef, task }: Props) {
         <input type="text" placeholder='Enter a title' name='name' defaultValue={task?.name} autoComplete='prueba' />
       </label>
       <label>Description
-        <textarea name="task__description" placeholder='Enter a short description' defaultValue={task?.description}></textarea>
+        <textarea name="task__description" placeholder='Enter a short description' defaultValue={task?.description || ""}></textarea>
       </label>
-      <label>Icon</label>
+      <label htmlFor={idInputURL} >Icon</label>
       <input type="text" hidden id={idInputURL} name='icon' defaultValue={task?.icon} />
       <div className="modal__icons" >
         {Object.entries(ICONS).map(icon =>
@@ -47,7 +44,7 @@ export default function BodyModal({ formRef, task }: Props) {
           </figure>
         )}
       </div>
-      <label>Status</label>
+      <label htmlFor={idInputHidden}>Status</label>
       <section className='modal__status'>
         <input type="text" name="status" hidden id={idInputHidden} defaultValue={task?.status || undefined} />
         {STATUS.map(state => {

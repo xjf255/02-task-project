@@ -1,18 +1,19 @@
 export interface Task {
   id?: string;
   name: string;
-  description: string;
+  description: string | null;
   icon: string;
   status: string | null;
 }
-
-export interface ModalProps {
-  isOpen: boolean,
+export interface Store {
+  modalState: boolean,
   task?: Task
-  closedModal: (arg: boolean) => void
+  changeModalState: () => void
+  updateTask: (newTask: Task) => void
+  addNewTask: () => void
+  closeModal: () => void
 }
 
-export interface PropsListItems {
-  handleAddTask: () => void,
-  updateTask: (el) => void
+export interface RefProp {
+  formRef: React.RefObject<HTMLFormElement>,
 }
