@@ -39,8 +39,8 @@ export default function BodyModal({ formRef }: RefProp) {
       <input type="text" hidden id={idInputURL} name='icon' defaultValue={task?.icon} />
       <div className="modal__icons" >
         {Object.entries(ICONS).map(icon =>
-          <figure className="icons__task" key={icon[0]} onClick={(event: React.MouseEvent<HTMLElement>) => handleClickIcons(event)}>
-            <img src={icon[1]} alt={icon[0]} className={icon[1] === task?.icon ? "icon--selected" : ''} />
+          <figure className="icons__task" key={icon[0]} >
+            <img src={icon[1]} alt={icon[0]} className={icon[1] === task?.icon ? "icon--selected" : ''} onClick={(event: React.MouseEvent<HTMLElement>) => handleClickIcons(event)} />
           </figure>
         )}
       </div>
@@ -50,8 +50,8 @@ export default function BodyModal({ formRef }: RefProp) {
         {STATUS.map(state => {
           const type = state === STATUS[1] ? CLASSNAME_STATUS[1] : state === STATUS[0] ? CLASSNAME_STATUS[0] : state === null ? "" : CLASSNAME_STATUS[2]
           return (
-            <div key={state} className='status__field' onClick={(event: React.MouseEvent<HTMLDivElement>) => handleClickStatus(event)}>
-              <span className={`${type} ${task?.status === state ? "--selected" : ''}`}>
+            <div key={state} className='status__field'>
+              <span className={`${type} ${task?.status === state ? "--selected" : ''}`} onClick={(event: React.MouseEvent<HTMLDivElement>) => handleClickStatus(event)}>
                 <GetIcon state={type} />
                 <p>{state}</p>
                 <figure className='check'>

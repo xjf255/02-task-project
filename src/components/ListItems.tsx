@@ -1,23 +1,41 @@
 import { CLASSNAME_STATUS, STATUS } from "../const"
 import { NewItem } from "../Icons"
-// import data from '../mock.json'
 import GetIcon from "./GetIcon"
 import { useModalStore } from "../store/useModalStore"
-import useFetchAPI from "../Hooks/useAPI"
+import { Task } from "../types"
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query"
+import { fetchProject } from "../utils/useAPI"
+import { useEffect, useState } from "react"
 
 
 export default function ListItems() {
+  const queryClient = useQueryClient()
+  const [page, setPage] = useState(0)
   const { addNewTask, updateTask } = useModalStore()
-  const { data, isError, isLoading } = useFetchAPI({ key: "Tasks", api: "https://zero2-task-api.onrender.com/tasks" })
-  if (isError) return (
-    <>
-      <h4>Error al cargar items</h4>
-    </>
-  )
+  const { data, isLoading, isError, isPlaceholderData } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: () => fetchProject(page + 1),
+    placeholderData: keepPreviousData,
+    staleTime: 5000
+  })
+
+  useEffect(() => {
+    if (!isPlaceholderData && data?.hasMore) {
+      queryClient.prefetchQuery({
+        queryKey: ['projects', page + 1],
+        queryFn: () => fetchProject(page + 1),
+      })
+    }
+  }, [data, isPlaceholderData, page, queryClient])
+
+  console.log(data)
+
+  if (isError) <h4>Error al cargar items</h4>
+
   return (
     <ul>
-      {isLoading !== false && <p>loading...</p>}
-      {data && data.map(task => {
+      {isLoading && <span> Loading...</span>}
+      {data && data.projects.map((task: Task) => {
         const type = task.status === STATUS[1] ? CLASSNAME_STATUS[1] : task.status === STATUS[0] ? CLASSNAME_STATUS[0] : task.status === null ? "" : CLASSNAME_STATUS[2]
         return (
           <li className={type} key={task.name} onClick={() => updateTask(task)}>
@@ -42,6 +60,22 @@ export default function ListItems() {
           <h3>Add new task</h3>
         </section>
       </li>
-    </ul>
+      <span className="pagination">
+        {page !== 0 && <button
+          className="btn__pagination"
+          onClick={() => setPage((old) => Math.max(old - 1, 0))}
+        >
+          last
+        </button>}
+        {data?.hasMore && <button
+          className="btn__pagination"
+          onClick={() => {
+            setPage((old) => (data?.hasMore ? old + 1 : old))
+          }}
+        >
+          Next Page
+        </button>}
+      </span>
+    </ul >
   )
 }
