@@ -5,7 +5,7 @@ export interface Task {
   icon: string;
   status: string | null;
 }
-export interface Store {
+export interface StoreModal {
   modalState: boolean,
   task?: Task
   changeModalState: () => void
@@ -14,6 +14,17 @@ export interface Store {
   closeModal: () => void
 }
 
+export interface StorePage {
+  page: number,
+  changeNextPage: () => void,
+  changeLastPage: () => void
+}
+
 export interface RefProp {
   formRef: React.RefObject<HTMLFormElement>,
+}
+
+export interface APIModel {
+  projects: Array<Task>
+  hasMore: boolean
 }

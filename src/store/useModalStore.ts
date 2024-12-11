@@ -1,7 +1,7 @@
 import { create } from 'zustand'
-import { Store } from '../types'
+import { StoreModal } from '../types'
 
-export const useModalStore = create<Store>()((set) => ({
+export const useModalStore = create<StoreModal>()((set) => ({
   modalState: false,
   changeModalState: () => set((state) => ({ modalState: !state.modalState })),
   task: undefined,

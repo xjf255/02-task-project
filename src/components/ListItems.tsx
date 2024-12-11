@@ -5,32 +5,35 @@ import { useModalStore } from "../store/useModalStore"
 import { Task } from "../types"
 import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query"
 import { fetchProject } from "../utils/useAPI"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { usePageStore } from "../store/usePageStore"
 
 
 export default function ListItems() {
   const queryClient = useQueryClient()
-  const [page, setPage] = useState(0)
+  const { page, changeLastPage, changeNextPage } = usePageStore()
   const { addNewTask, updateTask } = useModalStore()
-  const { data, isLoading, isError, isPlaceholderData } = useQuery({
-    queryKey: ["tasks"],
+
+  const { data, isLoading, isError, isFetching } = useQuery({
+    queryKey: ["tasks", page],
     queryFn: () => fetchProject(page + 1),
     placeholderData: keepPreviousData,
     staleTime: 5000
   })
 
   useEffect(() => {
-    if (!isPlaceholderData && data?.hasMore) {
+    if (data?.hasMore) {
       queryClient.prefetchQuery({
-        queryKey: ['projects', page + 1],
+        queryKey: ['tasks', page + 1],
         queryFn: () => fetchProject(page + 1),
       })
     }
-  }, [data, isPlaceholderData, page, queryClient])
+  }, [data, page, queryClient])
 
-  console.log(data)
+  if (isError) {
+    return <h4>Error al cargar items</h4>;
+  }
 
-  if (isError) <h4>Error al cargar items</h4>
 
   return (
     <ul>
@@ -38,7 +41,7 @@ export default function ListItems() {
       {data && data.projects.map((task: Task) => {
         const type = task.status === STATUS[1] ? CLASSNAME_STATUS[1] : task.status === STATUS[0] ? CLASSNAME_STATUS[0] : task.status === null ? "" : CLASSNAME_STATUS[2]
         return (
-          <li className={type} key={task.name} onClick={() => updateTask(task)}>
+          <li className={type} key={task.id} onClick={() => updateTask(task)}>
             <section>
               <figure className='item__icons'>
                 <img src={task.icon} alt={task.name} />
@@ -63,15 +66,14 @@ export default function ListItems() {
       <span className="pagination">
         {page !== 0 && <button
           className="btn__pagination"
-          onClick={() => setPage((old) => Math.max(old - 1, 0))}
+          onClick={changeLastPage}
         >
           last
         </button>}
         {data?.hasMore && <button
+          disabled={isFetching}
           className="btn__pagination"
-          onClick={() => {
-            setPage((old) => (data?.hasMore ? old + 1 : old))
-          }}
+          onClick={changeNextPage}
         >
           Next Page
         </button>}

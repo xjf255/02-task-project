@@ -1,101 +1,131 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { DoneIcons, Trash } from "../Icons";
 import { useModalStore } from "../store/useModalStore";
-import { RefProp } from "../types";
+import { APIModel, RefProp, Task } from "../types";
+import { usePageStore } from "../store/usePageStore";
+import { createTask, removeTask, updateTask } from "../utils/useAPI";
 
 export default function FooterModal({ formRef }: RefProp) {
-  const { task } = useModalStore()
+  const { task, closeModal } = useModalStore()
+  const { page } = usePageStore()
+  const queryClient = useQueryClient()
 
-  const submitTask = async (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault()
-    if (formRef.current) {
-      const form = new FormData(formRef.current)
-      const name = form.get("name")
-      const description = form.get("task__description")
-      const icon = form.get("icon")
-      const status = form.get("status")
+  const updateTaskMutation = useMutation({
+    //solomante acepta un param
+    mutationFn: ({ id, updatedTask }: { id: string, updatedTask: Partial<Task> }) => updateTask(id, updatedTask),
+    onMutate: async ({ id, updatedTask }: { id: string, updatedTask: Partial<Task> }) => {
+      //cancela consultas pendientes
+      await queryClient.cancelQueries({ queryKey: ["tasks", page] })
+      //obtiene el estado previo
+      const previousTasks = queryClient.getQueryData(["tasks"])
+      //actualizacion optimista
+      queryClient.setQueryData(["tasks"], (oldTasks: APIModel | undefined) => {
+        if (!oldTasks) return undefined;
 
-      console.log({
-        name,
-        description,
-        icon,
-        status
+        return {
+          ...oldTasks,
+          projects: oldTasks.projects.map((oldTask) =>
+            oldTask.id === id ? { ...oldTask, ...updatedTask } : oldTask
+          ),
+        };
+      });
+      return { previousTasks }
+    },
+    onError: (error, taskId, context) => {
+      queryClient.setQueryData(["tasks"], context?.previousTasks)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", page] });
+    }
+  })
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (newTask: Task) => await createTask(newTask),
+    onMutate: async (task) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks", page] })
+      const previousTasks = queryClient.getQueryData(["tasks"])
+
+      queryClient.setQueryData(["tasks", 0], (oldTasks: APIModel) => {
+        console.log(oldTasks)
+        return {
+          ...oldTasks,
+          projects: [
+            ...oldTasks.projects,
+            task
+          ]
+        }
       })
 
+      return { previousTasks }
+    },
+    onError: (error, taskId, context) => {
+      console.log(error)
+      queryClient.setQueryData(["tasks"], context?.previousTasks)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", page] });
+    }
+  })
+
+  const removeTaskMutation = useMutation({
+    mutationFn: (taskId: string) => removeTask(taskId),
+    onMutate: async (taskId) => {
+      await queryClient.cancelQueries({ queryKey: ["tasks", page] });
+      const previousTasks = queryClient.getQueryData<APIModel>(["tasks"]);
+
+      queryClient.setQueryData<APIModel>(["tasks"], (oldTasks) => {
+        if (!oldTasks) return oldTasks;
+        return {
+          ...oldTasks,
+          projects: oldTasks.projects.filter((task) => task.id !== taskId),
+        };
+      });
+
+      return { previousTasks }
+    },
+    onError: (error, taskId, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(["tasks"], context.previousTasks);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks", page] });
+    },
+  });
+
+
+  const submitTask = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (formRef.current) {
+      const form = new FormData(formRef.current);
+      const name = form.get("name") as string;
+      const description = form.get("task__description") as string;
+      const icon = form.get("icon") as string;
+      const status = form.get("status") as string;
+
+      if (!name || !icon || !status) {
+        alert("Todos los campos obligatorios deben estar llenos.");
+        return;
+      }
+
       if (task?.id) {
-        const API = import.meta.env.VITE_API_TASKS
-        try {
-          const response = await fetch(`${API}/${task.id}`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name,
-              description,
-              icon,
-              status
-            })
-          })
-
-          if (response.ok) {
-            console.log("Task updated successfully!")
-          } else {
-            alert("Failed to update task")
-          }
-        } catch (error) {
-          console.error("Error updating task:", error)
-        }
-        return
-      }
-
-      const API = import.meta.env.VITE_API_TASKS
-      try {
-        const response = await fetch(API, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            name,
-            description: description === '' ? null : description,
-            icon,
-            status
-          })
-        })
-        console.log(response)
-        if (response.ok) {
-          console.log("Task created successfully!")
-        } else {
-          console.error("Failed to create task")
-        }
-      } catch (error) {
-        console.error("Error task:", error)
+        updateTaskMutation.mutate({ id: task.id, updatedTask: { name, description, icon, status } });
+      } else {
+        createTaskMutation.mutate({ name, description, icon, status });
       }
     }
-  }
+    closeModal();
+  };
 
-  const removeTask = async () => {
-    if (task?.id) {
-      const API = import.meta.env.VITE_API_TASKS
-      try {
-        const response = await fetch(`${API}/${task.id}`, {
-          method: 'DELETE'
-        })
-        console.log(response)
-        if (response.ok) {
-          console.log("Task deleted successfully!")
-        } else {
-          console.error("Failed to delete task")
-        }
-      } catch (error) {
-        console.error("Error task:", error)
-      }
-    }
+
+  const handleRemoveTask = () => {
+    if (task?.id) removeTaskMutation.mutate(task.id)
+    closeModal()
   }
 
   return (
     <footer>
-      {task?.id && <button className='btn--delete' onClick={removeTask}>Delete <Trash /> </button>}
+      {task?.id && <button className='btn--delete' onClick={handleRemoveTask}>Delete <Trash /> </button>}
       <button className='btn--submit' onClick={(event) => submitTask(event)}>Save <DoneIcons /> </button>
     </footer>
   )
