@@ -31,7 +31,7 @@ export default function FooterModal({ formRef }: RefProp) {
       });
       return { previousTasks }
     },
-    onError: (error, taskId, context) => {
+    onError: (_error, _taskId, context) => {
       queryClient.setQueryData(["tasks"], context?.previousTasks)
     },
     onSettled: () => {
@@ -58,7 +58,7 @@ export default function FooterModal({ formRef }: RefProp) {
 
       return { previousTasks }
     },
-    onError: (error, taskId, context) => {
+    onError: (error, _taskId, context) => {
       console.log(error)
       queryClient.setQueryData(["tasks"], context?.previousTasks)
     },
@@ -83,7 +83,7 @@ export default function FooterModal({ formRef }: RefProp) {
 
       return { previousTasks }
     },
-    onError: (error, taskId, context) => {
+    onError: (_error, _taskId, context) => {
       if (context?.previousTasks) {
         queryClient.setQueryData(["tasks"], context.previousTasks);
       }
